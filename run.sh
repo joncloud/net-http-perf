@@ -1,11 +1,12 @@
 #!/bin/bash
 publish() {
-    readonly APP=$1
-    readonly CONFIGURATION=$2
-    readonly SOURCE_PATH=./$APP
+    local APP=$1
+    local CONFIGURATION=$2
+    local SOURCE_PATH=./$APP
+    echo publish $APP $CONFIGURATION
     pushd $SOURCE_PATH
 
-    TARGET_PATH=../bin/$APP
+    local TARGET_PATH=../bin/$APP
     if [ -d "$TARGET_PATH" ]; then
         rm -rf "$TARGET_PATH"
     fi
@@ -16,32 +17,39 @@ publish() {
 }
 
 reflector() {
-    readonly PORT=$1
-    dotnet ./bin/Reflector/Reflector.dll > /dev/null &
-    readonly PID=$!
+    local PORT=$1
+    echo reflector $PORT
+    export ASPNETCORE_URLS=http://127.0.0.1:$PORT
+    dotnet ./bin/Reflector/Reflector.dll &
+    local PID=$!
+    echo reflector on $PORT with $PID
     return $PID
 }
 
 test() {
-    readonly NAME=$1
-    readonly EXE=$2
-    readonly APP=$3
+    local NAME=$1
+    local EXE=$2
+    local APP=$3
+    echo test $NAME using $EXE $APP
 
-    readonly CORE_REFLECTOR=$(reflector 5020)
-    readonly FRAMEWORK_REFLECTOR=$(reflector 5461)
+    echo starting reflector
+    local CORE_REFLECTOR=$(reflector 5020)
+    echo core started
+    local FRAMEWORK_REFLECTOR=$(reflector 5461)
+    echo framework started
 
-    $EXE $APP > /dev/null
+    $EXE $APP # > /dev/null
 
     kill -9 $CORE_REFLECTOR
     kill -9 $FRAMEWORK_REFLECTOR
 
-    readonly TARGET_PATH=./results/$NAME.md
+    local TARGET_PATH=./results/$NAME.md
     echo "######### $NAME"
     mv ./BenchmarkDotNet.Artifacts/results/Program-report-github.md $TARGET_PATH
     cat $TARGET_PATH
 }
 
-readonly DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pushd $DIR
 dotnet restore
 
@@ -49,7 +57,7 @@ publish App.Net461 release
 publish App.NetCoreApp20 release
 publish Reflector release
 
-readonly TIMESTAMP=$(date +%s)
+TIMESTAMP=$(date +%s)
 if [ ! -d ./results ]; then
     mkdir -p ./results
 fi
