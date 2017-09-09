@@ -24,6 +24,7 @@ In order to run tests on Linux the environment variable `FrameworkPathOverride` 
 Using Bash execute `run.sh`.
 
 ## Results
+The results show that `HttpWebRequest` degrades in performance significantly when running under .NET Core.
 
 ### Windows Azure VM
 ```powershell
